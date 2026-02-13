@@ -25,7 +25,12 @@ export default function Home() {
 
   // Google login
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: "https://smart-bookmark-app-zeta-wheat.vercel.app" // <-- Vercel URL
+      }
+    });
     if (error) console.error("Error signing in:", error.message);
   };
 
@@ -73,26 +78,6 @@ export default function Home() {
     if (error) console.error("Error deleting bookmark:", error.message);
     else setBookmarks(bookmarks.filter((b) => b.id !== id));
   };
-
-  // Subscribe to real-time updates
-  useEffect(() => {
-    if (!user) return;
-
-    const subscription = supabase
-      .channel("public:bookmarks")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "bookmarks", filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          fetchBookmarks(user.id); // refetch bookmarks on insert/delete
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, [user]);
 
   return (
     <main className="min-h-screen bg-gray-100 p-8">
